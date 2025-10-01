@@ -14,9 +14,7 @@
   <body>
     <div class="container">
       <div class="header">
-        <!-- CÓDIGO DO LOGO ADICIONADO AQUI -->
-        <img src="https://drive.google.com/uc?export=view&id=1Mggr5bcfN7RR0cisYNIR-u3NaH-ME_85" alt="Logo KaBuM!" class="header-logo">
-        
+        <img src="https://www.kabum.com.br/hotsite/tela4andar/img/logoKaBuM.png" alt="Logo KaBuM!" class="header-logo">
         <h1>Gerador de Laudo de Garantia</h1>
       </div>
       <p class="subtitle">Preencha os campos para registrar e enviar um novo laudo.</p>
@@ -43,6 +41,20 @@
           <input type="text" id="protocolo" name="Protocolo RMA" placeholder="Protocolo RMA" required>
         </div>
         
+        <div class="input-group-radio">
+            <span class="radio-group-label"><i class="fa-solid fa-clipboard-check icon"></i> Motivo do Protocolo</span>
+            <div class="radio-buttons">
+                <label>
+                    <input type="radio" name="Motivo do Protocolo" value="Garantia" required>
+                    <span>Garantia</span>
+                </label>
+                <label>
+                    <input type="radio" name="Motivo do Protocolo" value="Arrependimento">
+                    <span>Arrependimento</span>
+                </label>
+            </div>
+        </div>
+
         <div class="input-group">
           <i class="fa-solid fa-microchip icon"></i>
           <input type="text" id="produto" name="Produto" placeholder="Produto" required>
@@ -53,9 +65,19 @@
           <textarea id="motivo-informado" name="Motivo Informado no Protocolo" rows="3" placeholder="Motivo Informado no Protocolo"></textarea>
         </div>
         
+        <!-- CAMPO DE SELEÇÃO DE CATEGORIA COM DROPDOWN CUSTOMIZADO -->
+        <div class="input-group">
+          <i class="fa-solid fa-tags icon"></i>
+          <div class="custom-select-wrapper">
+             <select id="categoria-laudo" name="categoria-laudo" required>
+                <!-- As opções serão populadas via script -->
+             </select>
+          </div>
+        </div>
+
         <div class="input-group">
           <i class="fa-solid fa-file-medical icon"></i>
-          <textarea id="laudo-selecionado" name="Laudo Selecionado" rows="5" placeholder="Explanações do Problema (Laudo Selecionado)" required></textarea>
+          <textarea id="laudo-selecionado" name="Laudo Selecionado" rows="5" placeholder="O laudo aparecerá aqui para conferência..." required readonly></textarea>
         </div>
 
         <!-- Campos de Upload de Arquivo -->
@@ -84,7 +106,6 @@
         </div>
       </form>
       
-      <!-- Overlay de Carregamento -->
       <div id="loader" class="loader-overlay" style="display:none;">
         <div class="loader-content">
           <div class="spinner"></div>
@@ -95,7 +116,6 @@
     </div>
 
     <script>
-      // O JAVASCRIPT PERMANECE O MESMO DA VERSÃO ANTERIOR
       const form = document.getElementById('laudo-form');
       const submitButton = document.getElementById('submit-button');
       const loader = document.getElementById('loader');
@@ -150,12 +170,22 @@
         alert(response.message);
         if (response.success) {
           form.reset();
-          // Reset file input labels
           document.querySelectorAll('.file-button span').forEach((span, index) => {
               if(index === 0) span.textContent = 'Foto do Produto 1';
               if(index === 1) span.textContent = 'Foto do Produto 2';
               if(index === 2) span.textContent = 'Foto Nº de Série';
           });
+          
+          const customSelect = document.querySelector('.select-selected');
+          const firstOption = document.querySelector('#categoria-laudo option');
+          if(customSelect && firstOption) {
+            customSelect.innerHTML = firstOption.textContent;
+          }
+
+          // Reseta o campo de texto para o estado inicial
+          laudoTextarea.value = '';
+          laudoTextarea.readOnly = true;
+          laudoTextarea.placeholder = "O laudo aparecerá aqui para conferência...";
         }
         submitButton.disabled = false;
       }
@@ -166,12 +196,145 @@
         submitButton.disabled = false;
       }
       
-      // Script para mostrar nome do arquivo no botão
+      let laudosData = {};
+      const laudoTextarea = document.getElementById('laudo-selecionado');
+      const originalSelect = document.getElementById('categoria-laudo');
+
+      function onLaudosFailure(error) {
+        console.error("Erro ao buscar laudos: " + error.message);
+        alert("Não foi possível carregar as categorias de laudo.");
+        originalSelect.innerHTML = '<option value="">Erro ao carregar</option>';
+        initCustomSelect();
+      }
+
+      function popularCategorias(data) { // 'data' agora é um array de objetos
+        if (data.error) {
+          onLaudosFailure({ message: data.error });
+          return;
+        }
+        
+        // Reconstrói o objeto laudosData para consulta, mas usa o array para popular
+        laudosData = {};
+        data.forEach(item => {
+            laudosData[item.categoria] = item.laudo;
+        });
+
+        originalSelect.innerHTML = '<option value="" disabled selected>Selecione uma Categoria de Laudo</option>';
+        
+        // Itera sobre o array recebido para garantir a ordem correta
+        data.forEach(item => {
+          const option = document.createElement('option');
+          option.value = item.categoria;
+          option.textContent = item.categoria;
+          originalSelect.appendChild(option);
+        });
+        
+        initCustomSelect();
+      }
+
+      // Evento de mudança para lidar com o laudo personalizado
+      originalSelect.addEventListener('change', function() {
+        const categoriaSelecionada = this.value;
+        if (categoriaSelecionada === 'Laudo Personalizado') {
+          laudoTextarea.value = '';
+          laudoTextarea.readOnly = false;
+          laudoTextarea.placeholder = 'Digite o laudo personalizado aqui...';
+          laudoTextarea.focus(); // Coloca o foco no campo para digitação
+        } else {
+          laudoTextarea.readOnly = true;
+          laudoTextarea.value = laudosData[categoriaSelecionada] || '';
+          laudoTextarea.placeholder = "O laudo aparecerá aqui para conferência...";
+        }
+      });
+      
+      function initCustomSelect() {
+        const wrapper = document.querySelector(".custom-select-wrapper");
+        if (!wrapper) return;
+        
+        const oldSelected = wrapper.querySelector('.select-selected');
+        const oldItems = wrapper.querySelector('.select-items');
+        if (oldSelected) oldSelected.remove();
+        if (oldItems) oldItems.remove();
+        
+        const select = wrapper.querySelector("select");
+        if (!select || select.options.length === 0) return;
+
+        const selected = document.createElement("div");
+        selected.setAttribute("class", "select-selected");
+        selected.innerHTML = select.options[select.selectedIndex > -1 ? select.selectedIndex : 0].innerHTML;
+        wrapper.appendChild(selected);
+
+        const items = document.createElement("div");
+        items.setAttribute("class", "select-items select-hide");
+
+        for (let i = 0; i < select.length; i++) {
+          if (select.options[i].disabled) continue;
+          const item = document.createElement("div");
+          item.innerHTML = select.options[i].innerHTML;
+          item.addEventListener("click", function(e) {
+              const s = this.parentNode.parentNode.querySelector("select");
+              const sl = this.parentNode.previousSibling;
+              for (let j = 0; j < s.length; j++) {
+                if (s.options[j].innerHTML == this.innerHTML) {
+                  s.selectedIndex = j;
+                  sl.innerHTML = this.innerHTML;
+                  s.dispatchEvent(new Event('change'));
+                  break;
+                }
+              }
+              sl.click();
+          });
+          items.appendChild(item);
+        }
+        wrapper.appendChild(items);
+
+        selected.addEventListener("click", function(e) {
+          e.stopPropagation();
+          closeAllSelect(this);
+          this.nextSibling.classList.toggle("select-hide");
+          this.classList.toggle("select-arrow-active");
+        });
+      }
+
+      function closeAllSelect(elmnt) {
+        let x, y, i, arrNo = [];
+        x = document.getElementsByClassName("select-items");
+        y = document.getElementsByClassName("select-selected");
+        for (i = 0; i < y.length; i++) {
+          if (elmnt == y[i]) {
+            arrNo.push(i)
+          } else {
+            y[i].classList.remove("select-arrow-active");
+          }
+        }
+        for (i = 0; i < x.length; i++) {
+          if (arrNo.indexOf(i)) {
+            x[i].classList.add("select-hide");
+          }
+        }
+      }
+      
+      document.addEventListener("click", closeAllSelect);
+
+      // Função para carregar os dados iniciais (laudos)
+      function carregarDadosIniciais() {
+        originalSelect.innerHTML = '<option value="">Carregando categorias...</option>';
+        initCustomSelect();
+        
+        google.script.run
+          .withSuccessHandler(popularCategorias)
+          .withFailureHandler(onLaudosFailure)
+          .obterLaudos();
+      }
+
+      // Garante que a chamada para o servidor só ocorra depois que a página inteira,
+      // incluindo os scripts do Google, for carregada.
+      window.onload = carregarDadosIniciais;
+
       document.querySelectorAll('.file-input').forEach(input => {
         input.addEventListener('change', function(e) {
           const fileName = e.target.files[0] ? e.target.files[0].name : 'Selecionar arquivo';
-          const label = this.nextElementSibling.querySelector('span');
-          label.textContent = fileName;
+          this.nextElementSibling.querySelector('span').textContent = fileName;
         });
       });
     </script>
