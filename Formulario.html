@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <!-- Fontes e Ícones -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    
+    <!-- Inclui o CSS do arquivo Estilo.html -->
+    <?!= include('Estilo'); ?>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <!-- CÓDIGO DO LOGO ADICIONADO AQUI -->
+        <img src="https://drive.google.com/uc?export=view&id=1Mggr5bcfN7RR0cisYNIR-u3NaH-ME_85" alt="Logo KaBuM!" class="header-logo">
+        
+        <h1>Gerador de Laudo de Garantia</h1>
+      </div>
+      <p class="subtitle">Preencha os campos para registrar e enviar um novo laudo.</p>
+      
+      <form id="laudo-form">
+        
+        <div class="input-group">
+          <i class="fa-solid fa-envelope icon"></i>
+          <input type="email" id="email" name="Endereço de e-mail" placeholder="Seu E-mail (Para receber o laudo)" required>
+        </div>
+
+        <div class="input-group">
+          <i class="fa-solid fa-ticket icon"></i>
+          <input type="text" id="pedido" name="Pedido" placeholder="Pedido" required>
+        </div>
+
+        <div class="input-group">
+          <i class="fa-solid fa-user icon"></i>
+          <input type="text" id="cliente" name="Cliente" placeholder="Cliente" required>
+        </div>
+
+        <div class="input-group">
+          <i class="fa-solid fa-barcode icon"></i>
+          <input type="text" id="protocolo" name="Protocolo RMA" placeholder="Protocolo RMA" required>
+        </div>
+        
+        <div class="input-group">
+          <i class="fa-solid fa-microchip icon"></i>
+          <input type="text" id="produto" name="Produto" placeholder="Produto" required>
+        </div>
+
+        <div class="input-group">
+          <i class="fa-solid fa-clipboard-question icon"></i>
+          <textarea id="motivo-informado" name="Motivo Informado no Protocolo" rows="3" placeholder="Motivo Informado no Protocolo"></textarea>
+        </div>
+        
+        <div class="input-group">
+          <i class="fa-solid fa-file-medical icon"></i>
+          <textarea id="laudo-selecionado" name="Laudo Selecionado" rows="5" placeholder="Explanações do Problema (Laudo Selecionado)" required></textarea>
+        </div>
+
+        <!-- Campos de Upload de Arquivo -->
+        <label class="file-label"><i class="fa-solid fa-camera"></i> Anexar Fotos</label>
+        
+        <div class="file-upload-wrapper">
+          <input type="file" id="foto1" name="foto1" class="file-input" accept="image/*" required>
+          <label for="foto1" class="file-button"><span>Foto do Produto 1</span><i class="fas fa-upload"></i></label>
+        </div>
+        
+        <div class="file-upload-wrapper">
+          <input type="file" id="foto2" name="foto2" class="file-input" accept="image/*" required>
+          <label for="foto2" class="file-button"><span>Foto do Produto 2</span><i class="fas fa-upload"></i></label>
+        </div>
+
+        <div class="file-upload-wrapper">
+          <input type="file" id="foto3" name="foto3" class="file-input" accept="image/*" required>
+          <label for="foto3" class="file-button"><span>Foto Nº de Série</span><i class="fas fa-upload"></i></label>
+        </div>
+
+
+        <div class="button-container">
+          <button type="submit" id="submit-button">
+            <i class="fas fa-paper-plane"></i> Enviar Laudo
+          </button>
+        </div>
+      </form>
+      
+      <!-- Overlay de Carregamento -->
+      <div id="loader" class="loader-overlay" style="display:none;">
+        <div class="loader-content">
+          <div class="spinner"></div>
+          <p class="loader-text">Processando Envio...</p>
+        </div>
+      </div>
+
+    </div>
+
+    <script>
+      // O JAVASCRIPT PERMANECE O MESMO DA VERSÃO ANTERIOR
+      const form = document.getElementById('laudo-form');
+      const submitButton = document.getElementById('submit-button');
+      const loader = document.getElementById('loader');
+
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!form.checkValidity()) {
+          alert('Atenção: Todos os campos obrigatórios devem ser preenchidos.');
+          return;
+        }
+
+        submitButton.disabled = true;
+        loader.style.display = 'flex';
+
+        const formData = new FormData(form);
+        const formObject = Object.fromEntries(formData.entries());
+        
+        const fileInputs = form.querySelectorAll('input[type="file"]');
+        const filePromises = Array.from(fileInputs).map(input => {
+          const file = input.files[0];
+          if (file) {
+            const reader = new FileReader();
+            return new Promise((resolve, reject) => {
+              reader.onload = e => {
+                const fileData = { fileName: file.name, mimeType: file.type, bytes: e.target.result.split(',')[1] };
+                resolve({ key: input.name, value: fileData });
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+          }
+          return Promise.resolve(null);
+        });
+
+        Promise.all(filePromises).then(files => {
+          files.forEach(fileInfo => {
+            if (fileInfo) {
+              formObject[fileInfo.key] = fileInfo.value;
+            }
+          });
+          
+          google.script.run
+            .withSuccessHandler(onSuccess)
+            .withFailureHandler(onFailure)
+            .processarFormulario(formObject);
+        });
+      });
+
+      function onSuccess(response) {
+        loader.style.display = 'none';
+        alert(response.message);
+        if (response.success) {
+          form.reset();
+          // Reset file input labels
+          document.querySelectorAll('.file-button span').forEach((span, index) => {
+              if(index === 0) span.textContent = 'Foto do Produto 1';
+              if(index === 1) span.textContent = 'Foto do Produto 2';
+              if(index === 2) span.textContent = 'Foto Nº de Série';
+          });
+        }
+        submitButton.disabled = false;
+      }
+
+      function onFailure(error) {
+        loader.style.display = 'none';
+        alert('Erro: ' + error.message);
+        submitButton.disabled = false;
+      }
+      
+      // Script para mostrar nome do arquivo no botão
+      document.querySelectorAll('.file-input').forEach(input => {
+        input.addEventListener('change', function(e) {
+          const fileName = e.target.files[0] ? e.target.files[0].name : 'Selecionar arquivo';
+          const label = this.nextElementSibling.querySelector('span');
+          label.textContent = fileName;
+        });
+      });
+    </script>
+  </body>
+</html>
+
