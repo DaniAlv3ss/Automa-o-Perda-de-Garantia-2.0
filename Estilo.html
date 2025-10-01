@@ -1,0 +1,297 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+  :root {
+    --cor-primaria: #FF6600;
+    --cor-secundaria: #FFA500;
+    --cor-fundo: #1A1A22;
+    --cor-fundo-container: #24242E;
+    --cor-fundo-input: #1E1E26;
+    --cor-texto: #F0F0F0;
+    --cor-texto-placeholder: #777;
+    --cor-borda: #3A3A4A;
+    --cor-borda-foco: #FF6600;
+  }
+
+  body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--cor-fundo);
+    background-image: radial-gradient(circle at top left, rgba(255, 102, 0, 0.1), transparent 30%);
+    color: var(--cor-texto);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 750px;
+    background-color: var(--cor-fundo-container);
+    padding: 30px 40px;
+    border-radius: 16px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--cor-borda);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  /* Efeito de brilho na borda superior */
+  .container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cor-primaria), transparent);
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--cor-borda);
+  }
+
+  .header-logo {
+    max-width: 220px;
+    margin-bottom: 15px;
+  }
+
+  h1 {
+    color: var(--cor-texto);
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+  }
+  
+  .subtitle {
+    text-align: center;
+    color: #bbb;
+    margin-bottom: 35px;
+    font-size: 15px;
+  }
+
+  .input-group {
+    position: relative;
+    margin-bottom: 25px;
+  }
+
+  .icon {
+    position: absolute;
+    top: 50%;
+    left: 18px;
+    transform: translateY(-50%);
+    color: var(--cor-borda);
+    transition: color 0.3s;
+  }
+  
+  input[type="text"],
+  input[type="email"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 15px 15px 15px 50px; /* Espaço para o ícone */
+    background-color: var(--cor-fundo-input);
+    border: 1px solid var(--cor-borda);
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 16px;
+    color: var(--cor-texto);
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--cor-borda-foco);
+    box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.25);
+  }
+  
+  /* Animação do ícone ao focar no campo */
+  input:focus ~ .icon, textarea:focus ~ .icon, select:focus ~ .icon {
+    color: var(--cor-primaria);
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: var(--cor-texto-placeholder);
+  }
+  
+  textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  /* ESTILOS PARA OS BOTÕES DE SELEÇÃO (RADIO) */
+  .radio-label {
+    font-weight: 600;
+    color: #ccc;
+    margin-bottom: 12px;
+    display: block;
+    padding-left: 5px;
+  }
+
+  .radio-group {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+    background-color: var(--cor-fundo-input);
+    padding: 10px;
+    border-radius: 8px;
+  }
+
+  .radio-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding-left: 35px;
+    cursor: pointer;
+    font-size: 16px;
+    user-select: none;
+  }
+
+  .radio-container input {
+    position: absolute;
+    opacity: 0;
+  }
+
+  .checkmark {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    height: 22px;
+    width: 22px;
+    background-color: var(--cor-fundo);
+    border: 2px solid var(--cor-borda);
+    border-radius: 50%;
+    transition: all 0.2s;
+  }
+
+  .radio-container:hover input ~ .checkmark {
+    border-color: var(--cor-secundaria);
+  }
+
+  .radio-container input:checked ~ .checkmark {
+    background-color: var(--cor-primaria);
+    border-color: var(--cor-primaria);
+  }
+  
+  .checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: white;
+    transform: translate(-50%, -50%);
+  }
+  
+  .radio-container input:checked ~ .checkmark:after {
+    display: block;
+  }
+
+  /* Estilos para Upload de Ficheiro */
+  .file-label {
+    font-weight: 600;
+    color: #ccc;
+    margin-bottom: 12px;
+    display: block;
+    padding-left: 5px;
+  }
+
+  .file-upload-wrapper {
+    margin-bottom: 15px;
+  }
+  
+  .file-input {
+    display: none;
+  }
+
+  .file-button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 12px 15px;
+    background-color: var(--cor-fundo-input);
+    border: 2px dashed var(--cor-borda);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s, border-color 0.3s;
+  }
+  
+  .file-button:hover {
+    background-color: #2D2D37;
+    border-color: var(--cor-primaria);
+  }
+  
+  .file-button span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 10px;
+    font-size: 14px;
+    color: var(--cor-texto-placeholder);
+  }
+  
+  .file-button .fa-upload {
+    color: var(--cor-primaria);
+  }
+
+  .button-container {
+    text-align: center;
+    margin-top: 40px;
+  }
+
+  button[type="submit"] {
+    background: linear-gradient(90deg, var(--cor-secundaria), var(--cor-primaria));
+    color: white;
+    padding: 16px 30px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    width: 100%;
+    letter-spacing: 0.5px;
+    box-shadow: 0 5px 15px rgba(255, 102, 0, 0.2);
+  }
+
+  button:disabled {
+    background: #555;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  button:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(255, 102, 0, 0.3);
+  }
+
+  /* Loader */
+  .loader-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(26, 26, 34, 0.8);
+    backdrop-filter: blur(5px);
+    display: flex; justify-content: center; align-items: center; z-index: 1000;
+  }
+  .loader-content { text-align: center; }
+  .loader-text { color: white; font-size: 18px; margin-top: 20px; font-weight: 600; }
+  .spinner {
+    border: 8px solid var(--cor-borda);
+    border-top: 8px solid var(--cor-primaria);
+    border-radius: 50%;
+    width: 60px; height: 60px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+  }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>
+
