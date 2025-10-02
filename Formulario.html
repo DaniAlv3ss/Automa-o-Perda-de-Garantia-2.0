@@ -5,7 +5,7 @@
     <!-- Fontes e Ícones -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
     
     <!-- Inclui o CSS do arquivo Estilo.html -->
@@ -21,12 +21,10 @@
       
       <form id="laudo-form">
         
-        <!-- **INÍCIO DA CORREÇÃO ROBUSTA DE E-MAIL** -->
         <div class="input-group">
           <i class="fa-solid fa-envelope icon"></i>
-          <input type="email" id="email" name="Endereço de e-mail" placeholder="Seu E-mail..." required>
+          <input type="email" id="email" name="Endereço de e-mail" placeholder="Carregando seu e-mail..." required readonly>
         </div>
-        <!-- **FIM DA CORREÇÃO ROBUSTA DE E-MAIL** -->
 
         <div class="input-group">
           <i class="fa-solid fa-ticket icon"></i>
@@ -42,23 +40,21 @@
           <i class="fa-solid fa-barcode icon"></i>
           <input type="text" id="protocolo" name="Protocolo RMA" placeholder="Protocolo RMA" required>
         </div>
-
-        <div class="radio-group">
-          <span class="radio-label"><i class="fa-solid fa-clipboard-question icon"></i>Motivo do Protocolo</span>
-          <div class="radio-options">
-            <label class="radio-container">
-              <input type="radio" name="Motivo do Protocolo" value="Garantia" required>
-              <span class="radio-custom"></span>
-              Garantia
-            </label>
-            <label class="radio-container">
-              <input type="radio" name="Motivo do Protocolo" value="Arrependimento">
-              <span class="radio-custom"></span>
-              Arrependimento
-            </label>
+        
+        <div class="input-group">
+          <label class="radio-label">Motivo do Protocolo</label>
+          <div class="radio-container">
+            <div class="radio-wrapper">
+              <input type="radio" id="garantia" name="Motivo do Protocolo" value="Garantia" required>
+              <label for="garantia">Garantia</label>
+            </div>
+            <div class="radio-wrapper">
+              <input type="radio" id="arrependimento" name="Motivo do Protocolo" value="Arrependimento">
+              <label for="arrependimento">Arrependimento</label>
+            </div>
           </div>
         </div>
-        
+
         <div class="input-group">
           <i class="fa-solid fa-microchip icon"></i>
           <input type="text" id="produto" name="Produto" placeholder="Produto" required>
@@ -69,20 +65,22 @@
           <textarea id="motivo-informado" name="Motivo Informado no Protocolo" rows="3" placeholder="Motivo Informado no Protocolo"></textarea>
         </div>
         
+        <!-- Dropdown customizado para Laudos -->
         <div class="input-group custom-select-wrapper">
-          <i class="fa-solid fa-list-check icon"></i>
-          <div class="custom-select-display" id="categoria-laudo-display">
-            <span>Selecione uma categoria de laudo...</span>
-            <i class="fas fa-chevron-down"></i>
-          </div>
-          <div class="custom-select-options" id="categoria-laudo-options">
-            <!-- As opções serão preenchidas por script -->
-          </div>
+            <i class="fa-solid fa-file-alt icon"></i>
+            <div id="select-laudo" class="custom-select">
+                <div class="custom-select-trigger"><span>Carregando categorias...</span>
+                    <div class="arrow"></div>
+                </div>
+                <div class="custom-options">
+                    <!-- Opções serão inseridas aqui pelo JavaScript -->
+                </div>
+            </div>
         </div>
-
+        
         <div class="input-group">
           <i class="fa-solid fa-file-medical icon"></i>
-          <textarea id="laudo-selecionado" name="Laudo Selecionado" rows="5" placeholder="Explanações do Problema (Laudo Selecionado)" required></textarea>
+          <textarea id="laudo-selecionado" name="Laudo Selecionado" rows="5" placeholder="Explanações do Problema (Laudo Selecionado)" required readonly></textarea>
         </div>
 
         <!-- Campos de Upload de Arquivo -->
@@ -111,184 +109,225 @@
         </div>
       </form>
       
-      <!-- Overlay de Carregamento -->
+      <!-- Overlay de Carregamento com Barra de Progresso -->
       <div id="loader" class="loader-overlay" style="display:none;">
         <div class="loader-content">
           <div class="spinner"></div>
-          <p class="loader-text">Processando Envio...</p>
+          <p id="loader-text" class="loader-text">Processando Envio...</p>
+          <div class="progress-bar-container">
+            <div id="progress-bar" class="progress-bar"></div>
+          </div>
         </div>
       </div>
 
     </div>
 
     <script>
-    // **INÍCIO DA CORREÇÃO ROBUSTA DE E-MAIL**
-    const userEmailFromServer = "<?!= userEmail ?>";
-    const emailInput = document.getElementById('email');
+      const form = document.getElementById('laudo-form');
+      const submitButton = document.getElementById('submit-button');
+      const loader = document.getElementById('loader');
+      const loaderText = document.getElementById('loader-text');
+      const progressBar = document.getElementById('progress-bar');
+      const emailInput = document.getElementById('email');
 
-    if (userEmailFromServer && userEmailFromServer.trim() !== "") {
-        emailInput.value = userEmailFromServer;
-        emailInput.readOnly = true; // Bloqueia o campo para edição
-        emailInput.title = "Este e-mail é preenchido automaticamente."; // Adiciona dica
-    } else {
-        emailInput.placeholder = "Seu e-mail (preenchimento manual)";
-    }
-    // **FIM DA CORREÇÃO ROBUSTA DE E-MAIL**
+      // --- INÍCIO DA LÓGICA DO PROGRESSO E PROCESSAMENTO EM ETAPAS ---
 
-
-    const form = document.getElementById('laudo-form');
-    const submitButton = document.getElementById('submit-button');
-    const loader = document.getElementById('loader');
-    const laudoTextarea = document.getElementById('laudo-selecionado');
-    const display = document.getElementById('categoria-laudo-display');
-    const optionsContainer = document.getElementById('categoria-laudo-options');
-    const displaySpan = display.querySelector('span');
-
-    let laudosData = [];
-
-    // Lógica do Dropdown Customizado
-    display.addEventListener('click', () => {
-      if (!display.classList.contains('disabled')) {
-        optionsContainer.style.display = optionsContainer.style.display === 'block' ? 'none' : 'block';
-        display.classList.toggle('open');
+      function updateProgress(percentage, message) {
+        progressBar.style.width = percentage + '%';
+        loaderText.textContent = message;
       }
-    });
 
-    window.addEventListener('click', (e) => {
-      if (!display.contains(e.target)) {
-        optionsContainer.style.display = 'none';
-        display.classList.remove('open');
-      }
-    });
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!form.checkValidity()) {
+          alert('Atenção: Todos os campos obrigatórios devem ser preenchidos.');
+          return;
+        }
 
-    function popularLaudos(laudos) {
-      laudosData = laudos;
-      optionsContainer.innerHTML = '';
-      laudosData.forEach(item => {
-        const optionDiv = document.createElement('div');
-        optionDiv.textContent = item.categoria;
-        optionDiv.dataset.value = item.categoria;
-        optionDiv.addEventListener('click', () => {
-          displaySpan.textContent = item.categoria;
-          optionsContainer.style.display = 'none';
-          display.classList.remove('open');
-          
-          if (item.categoria === 'Laudo Personalizado') {
-            laudoTextarea.value = '';
-            laudoTextarea.readOnly = false;
-            laudoTextarea.focus();
-          } else {
-            laudoTextarea.value = item.laudo;
-            laudoTextarea.readOnly = true;
+        submitButton.disabled = true;
+        loader.style.display = 'flex';
+        updateProgress(0, 'Iniciando...');
+
+        const formData = new FormData(form);
+        const formObject = Object.fromEntries(formData.entries());
+        
+        const fileInputs = form.querySelectorAll('input[type="file"]');
+        const filePromises = Array.from(fileInputs).map(input => {
+          const file = input.files[0];
+          if (file) {
+            const reader = new FileReader();
+            return new Promise((resolve, reject) => {
+              reader.onload = e => {
+                const fileData = { fileName: file.name, mimeType: file.type, bytes: e.target.result.split(',')[1] };
+                resolve({ key: input.name, value: fileData });
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
           }
+          return Promise.resolve(null);
         });
-        optionsContainer.appendChild(optionDiv);
-      });
-      displaySpan.textContent = "Selecione uma categoria de laudo...";
-      display.classList.remove('disabled');
-    }
 
-    window.onload = function() {
-      displaySpan.textContent = 'Carregando categorias...';
-      display.classList.add('disabled');
-      google.script.run
-        .withSuccessHandler(response => {
-          if(response.error) {
-            alert("Erro ao carregar laudos: " + response.error);
-            displaySpan.textContent = 'Erro ao carregar';
-          } else {
-            popularLaudos(response);
-          }
-        })
-        .withFailureHandler(err => {
-          alert("Falha crítica ao comunicar com o servidor: " + err.message);
-          displaySpan.textContent = 'Erro de comunicação';
-        })
-        .obterLaudos();
-    };
-
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      if (!form.checkValidity()) {
-        alert('Atenção: Todos os campos obrigatórios devem ser preenchidos.');
-        return;
-      }
-
-      submitButton.disabled = true;
-      loader.style.display = 'flex';
-
-      const formData = new FormData(form);
-      const formObject = Object.fromEntries(formData.entries());
-      
-      const fileInputs = form.querySelectorAll('input[type="file"]');
-      const filePromises = Array.from(fileInputs).map(input => {
-        const file = input.files[0];
-        if (file) {
-          const reader = new FileReader();
-          return new Promise((resolve, reject) => {
-            reader.onload = e => {
-              const fileData = { fileName: file.name, mimeType: file.type, bytes: e.target.result.split(',')[1] };
-              resolve({ key: input.name, value: fileData });
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
+        Promise.all(filePromises).then(files => {
+          files.forEach(fileInfo => {
+            if (fileInfo) {
+              formObject[fileInfo.key] = fileInfo.value;
+            }
           });
-        }
-        return Promise.resolve(null);
+          
+          updateProgress(5, 'Enviando dados e imagens...');
+          google.script.run
+            .withSuccessHandler(onEtapa1Success)
+            .withFailureHandler(onFailure)
+            .etapa1_SalvarDadosEUploads(formObject);
+        });
       });
 
-      Promise.all(filePromises).then(files => {
-        files.forEach(fileInfo => {
-          if (fileInfo) {
-            formObject[fileInfo.key] = fileInfo.value;
-          }
-        });
-        
+      function onEtapa1Success(response) {
+        if (!response.success) {
+          onFailure(response);
+          return;
+        }
+        updateProgress(35, 'Criando documento do laudo...');
         google.script.run
-          .withSuccessHandler(onSuccess)
+          .withSuccessHandler(onEtapa2Success)
           .withFailureHandler(onFailure)
-          .processarFormulario(formObject);
-      });
-    });
-
-    function onSuccess(response) {
-      loader.style.display = 'none';
-      alert(response.message);
-      if (response.success) {
-        form.reset();
-        document.querySelectorAll('.file-button span').forEach((span, index) => {
-            if(index === 0) span.textContent = 'Foto do Produto 1';
-            if(index === 1) span.textContent = 'Foto do Produto 2';
-            if(index === 2) span.textContent = 'Foto Nº de Série';
-        });
-        displaySpan.textContent = 'Selecione uma categoria de laudo...';
-        laudoTextarea.readOnly = false;
-        
-        // Reset do e-mail para o valor original após o envio
-        if (userEmailFromServer && userEmailFromServer.trim() !== "") {
-            emailInput.value = userEmailFromServer;
-            emailInput.readOnly = true;
-        } else {
-            emailInput.readOnly = false;
-        }
+          .etapa2_CriarDocumento(response.data);
       }
-      submitButton.disabled = false;
-    }
 
-    function onFailure(error) {
-      loader.style.display = 'none';
-      alert('Erro: ' + error.message);
-      submitButton.disabled = false;
-    }
-    
-    document.querySelectorAll('.file-input').forEach(input => {
-      input.addEventListener('change', function(e) {
-        const fileName = e.target.files[0] ? e.target.files[0].name : 'Selecionar arquivo';
-        const label = this.nextElementSibling.querySelector('span');
-        label.textContent = fileName;
+      function onEtapa2Success(response) {
+        if (!response.success) {
+          onFailure(response);
+          return;
+        }
+        updateProgress(75, 'Gerando PDF e enviando e-mail...');
+        google.script.run
+          .withSuccessHandler(onFinalSuccess)
+          .withFailureHandler(onFailure)
+          .etapa3_FinalizarEEnviar(response);
+      }
+
+      function onFinalSuccess(response) {
+        if (!response.success) {
+          onFailure(response);
+          return;
+        }
+        updateProgress(100, 'Concluído!');
+        
+        setTimeout(() => {
+          loader.style.display = 'none';
+          alert(response.message);
+          form.reset();
+          
+          // **INÍCIO DA CORREÇÃO DO E-MAIL**
+          // Repopula o e-mail após o reset do formulário
+          const userEmailFromServer = "<?= userEmail ?>";
+          if (userEmailFromServer) {
+            emailInput.value = userEmailFromServer;
+          } else {
+            emailInput.placeholder = "E-mail não encontrado, preencha manualmente";
+          }
+          // **FIM DA CORREÇÃO DO E-MAIL**
+
+          // Reset file input labels
+          document.querySelectorAll('.file-button span').forEach((span, index) => {
+              if(index === 0) span.textContent = 'Foto do Produto 1';
+              if(index === 1) span.textContent = 'Foto do Produto 2';
+              if(index === 2) span.textContent = 'Foto Nº de Série';
+          });
+          // Reset custom select
+          document.querySelector('.custom-select-trigger span').textContent = 'Selecione uma Categoria';
+          document.getElementById('laudo-selecionado').value = '';
+          submitButton.disabled = false;
+        }, 1000);
+      }
+
+      function onFailure(error) {
+        loader.style.display = 'none';
+        alert('Erro: ' + error.message);
+        submitButton.disabled = false;
+      }
+
+      // --- FIM DA LÓGICA DO PROGRESSO ---
+
+      // --- LÓGICA DO FORMULÁRIO (E-MAIL, DROPDOWN, ETC.) ---
+      window.onload = function() {
+        // Preenche o e-mail do usuário
+        const userEmailFromServer = "<?= userEmail ?>";
+        if (userEmailFromServer) {
+          emailInput.value = userEmailFromServer;
+        } else {
+          emailInput.placeholder = "E-mail não encontrado, preencha manualmente";
+          emailInput.removeAttribute('readonly');
+          emailInput.classList.remove('readonly');
+        }
+
+        // Carrega os laudos
+        google.script.run.withSuccessHandler(function(laudos) {
+          if (laudos.error) {
+            console.error(laudos.error);
+            document.querySelector('.custom-select-trigger span').textContent = 'Erro ao carregar laudos';
+            return;
+          }
+          
+          const laudoTextArea = document.getElementById('laudo-selecionado');
+          const selectWrapper = document.querySelector('.custom-select');
+          const selectTrigger = document.querySelector('.custom-select-trigger span');
+          const optionsContainer = document.querySelector('.custom-options');
+
+          selectTrigger.textContent = 'Selecione uma Categoria';
+          optionsContainer.innerHTML = '';
+
+          laudos.forEach(laudo => {
+            const option = document.createElement('span');
+            option.classList.add('custom-option');
+            option.textContent = laudo.categoria;
+            option.dataset.value = laudo.categoria;
+            option.dataset.laudo = laudo.laudo;
+            optionsContainer.appendChild(option);
+
+            option.addEventListener('click', function() {
+              const selectedText = this.dataset.value;
+              const selectedLaudo = this.dataset.laudo;
+              
+              selectTrigger.textContent = selectedText;
+              laudoTextArea.value = selectedLaudo;
+              selectWrapper.classList.remove('open');
+
+              if (selectedText === 'Laudo Personalizado') {
+                laudoTextArea.removeAttribute('readonly');
+                laudoTextArea.focus();
+              } else {
+                laudoTextArea.setAttribute('readonly', 'true');
+              }
+            });
+          });
+
+          document.querySelector('.custom-select-trigger').addEventListener('click', function() {
+            selectWrapper.classList.toggle('open');
+          });
+
+        }).obterLaudos();
+      };
+      
+      // Script para mostrar nome do arquivo no botão
+      document.querySelectorAll('.file-input').forEach(input => {
+        input.addEventListener('change', function(e) {
+          const fileName = e.target.files[0] ? e.target.files[0].name : 'Selecionar arquivo';
+          const label = this.nextElementSibling.querySelector('span');
+          label.textContent = fileName;
+        });
       });
-    });
+
+      // Fechar dropdown se clicar fora
+      document.addEventListener('click', function (e) {
+        const select = document.querySelector('.custom-select');
+        if (select && !select.contains(e.target)) {
+            select.classList.remove('open');
+        }
+      });
+
     </script>
   </body>
 </html>
