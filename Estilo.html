@@ -6,7 +6,7 @@
     --text-color: #f5f5f5;
     --input-background: #2a2a2a;
     --border-color: #444;
-    --border-radius: 8px; /* Borda mais suave */
+    --border-radius-main: 8px;
   }
 
   body {
@@ -28,7 +28,7 @@
     background: #252525;
     border: 1px solid var(--border-color);
     padding: 30px 40px;
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius-main);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   }
 
@@ -70,7 +70,7 @@
     transform: translateY(-50%);
     color: var(--kabum-orange);
     transition: all 0.3s;
-    z-index: 2; /* Para o ícone ficar sobre o campo */
+    pointer-events: none; /* Evita que o ícone capture o clique */
   }
 
   input[type="text"],
@@ -80,7 +80,7 @@
     padding: 15px 15px 15px 50px; /* Espaço para o ícone */
     background: var(--input-background);
     border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius-main);
     color: var(--text-color);
     font-family: 'Poppins', sans-serif;
     font-size: 1em;
@@ -93,197 +93,198 @@
     border-color: var(--kabum-orange);
     box-shadow: 0 0 10px rgba(255, 102, 0, 0.3);
   }
-
-  /* **INÍCIO DA CORREÇÃO ROBUSTA DE E-MAIL** */
-  input[readonly] {
-    background-color: #333; /* Fundo mais escuro para indicar que está bloqueado */
-    cursor: not-allowed; /* Cursor de "não permitido" */
+  
+  /* Estilo para campo de email automático e bloqueado */
+  input.readonly, input[readonly] {
+    background-color: #333;
     color: #aaa;
+    cursor: not-allowed;
   }
-  /* **FIM DA CORREÇÃO ROBUSTA DE E-MAIL** */
 
   textarea {
     resize: vertical;
     padding-top: 15px;
     min-height: 80px;
   }
-
-  .radio-group {
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    background: var(--input-background);
-    padding: 10px 15px 10px 15px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-  }
   
+  /* --- Estilos do Radio Button --- */
   .radio-label {
-    font-weight: 400;
+    display: block;
+    margin-bottom: 10px;
     color: #ccc;
-    margin-right: 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
+    font-weight: 500;
   }
-
-  .radio-label .icon {
-    position: static;
-    transform: none;
-  }
-  
-  .radio-options {
-    display: flex;
-    gap: 25px;
-  }
-  
   .radio-container {
     display: flex;
-    align-items: center;
-    cursor: pointer;
-    position: relative;
-    color: #ccc;
+    gap: 20px;
+    background-color: var(--input-background);
+    padding: 10px 20px;
+    border-radius: var(--border-radius-main);
+    border: 1px solid var(--border-color);
   }
-  
-  .radio-container input {
+  .radio-wrapper {
+    display: flex;
+    align-items: center;
+  }
+  .radio-wrapper input[type="radio"] {
     display: none;
   }
-  
-  .radio-custom {
-    height: 20px;
-    width: 20px;
-    background-color: #444;
-    border-radius: 50%;
-    margin-right: 10px;
-    display: flex; /* Para centralizar a bolinha interna */
-    justify-content: center;
-    align-items: center;
-    transition: background-color 0.3s;
-  }
-  
-  .radio-container:hover .radio-custom {
-    background-color: #555;
-  }
-  
-  .radio-container input:checked + .radio-custom {
-    background-color: var(--kabum-orange);
-  }
-  
-  .radio-custom::after {
-    content: '';
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--input-background);
-    display: block;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  
-  .radio-container input:checked + .radio-custom::after {
-    opacity: 1;
-  }
-  
-  /* Dropdown customizado */
-  .custom-select-wrapper {
-    position: relative;
-  }
-  
-  .custom-select-display {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 15px 15px 50px;
-    background: var(--input-background);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
+  .radio-wrapper label {
     cursor: pointer;
+    position: relative;
+    padding-left: 30px;
+    color: #ccc;
+    transition: color 0.3s;
+  }
+  .radio-wrapper label:before { /* Círculo externo */
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    background-color: #3d3d3d;
+    border-radius: 50%;
     transition: all 0.3s;
-    user-select: none;
   }
-  
-  .custom-select-display.disabled {
-    cursor: wait;
-    color: #888;
+  .radio-wrapper label:after { /* Círculo interno (ponto) */
+    content: '';
+    position: absolute;
+    left: 6px; /* AJUSTE DE CENTRALIZAÇÃO DEFINITIVO */
+    top: 50%;
+    transform: translateY(-50%) scale(0);
+    width: 12px; /* TAMANHO AJUSTADO */
+    height: 12px; /* TAMANHO AJUSTADO */
+    background-color: var(--kabum-orange);
+    border-radius: 50%;
+    transition: transform 0.2s ease-out;
   }
-  
-  .custom-select-display:hover:not(.disabled) {
+  .radio-wrapper input[type="radio"]:checked + label {
+    color: var(--kabum-orange);
+  }
+  .radio-wrapper input[type="radio"]:checked + label:before {
     border-color: var(--kabum-orange);
   }
-  
-  .custom-select-display.open {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
+  .radio-wrapper input[type="radio"]:checked + label:after {
+    transform: translateY(-50%) scale(1);
   }
-  
-  .custom-select-display .fa-chevron-down {
-    transition: transform 0.3s ease;
+
+  /* --- Estilos do Dropdown Customizado --- */
+  .custom-select-wrapper .icon {
+    z-index: 2; /* Para ficar acima do dropdown */
   }
-  
-  .custom-select-display.open .fa-chevron-down {
-    transform: rotate(180deg);
+  .custom-select {
+    position: relative;
+    font-family: 'Poppins', sans-serif;
   }
-  
-  .custom-select-options {
-    display: none;
+  .custom-select-trigger {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 15px 15px 50px;
+    font-size: 1em;
+    font-weight: 400;
+    color: var(--text-color);
+    background: var(--input-background);
+    border-radius: var(--border-radius-main);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .custom-select.open .custom-select-trigger {
+    border-color: var(--kabum-orange);
+    box-shadow: 0 0 10px rgba(255, 102, 0, 0.3);
+  }
+  .arrow {
+    position: relative;
+    height: 10px;
+    width: 10px;
+  }
+  .arrow::before, .arrow::after {
+    content: '';
     position: absolute;
-    top: 100%;
+    bottom: 0px;
+    width: 2px;
+    height: 100%;
+    background-color: #888;
+    transition: all 0.3s;
+  }
+  .arrow::before {
+    left: -1px;
+    transform: rotate(45deg);
+  }
+  .arrow::after {
+    left: 3px;
+    transform: rotate(-45deg);
+  }
+  .custom-select.open .arrow::before { transform: rotate(-45deg); }
+  .custom-select.open .arrow::after { transform: rotate(45deg); }
+  .custom-options {
+    position: absolute;
+    display: block;
+    top: 110%;
     left: 0;
     right: 0;
-    background: #333;
     border: 1px solid var(--border-color);
-    border-top: none;
-    border-bottom-left-radius: var(--border-radius);
-    border-bottom-right-radius: var(--border-radius);
+    border-radius: var(--border-radius-main);
+    background: #333;
+    transition: all 0.3s;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-10px);
     z-index: 10;
     max-height: 200px;
     overflow-y: auto;
   }
-
-  .custom-select-options div {
-    padding: 12px 20px;
-    cursor: pointer;
+  .custom-select.open .custom-options {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
   }
-  
-  .custom-select-options div:hover {
-    background: var(--kabum-orange);
+  .custom-option {
+    position: relative;
+    display: block;
+    padding: 12px 20px;
+    color: #ccc;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .custom-option:hover {
+    background-color: var(--kabum-orange);
     color: white;
   }
 
+  /* Estilo do Upload de Arquivo */
   .file-label {
     display: block;
     margin: 30px 0 15px 0;
     font-weight: 600;
     color: var(--kabum-orange);
   }
-
-  .file-input {
-    display: none;
-  }
-
-  .file-upload-wrapper {
-    margin-bottom: 15px;
-  }
-
+  .file-input { display: none; }
+  .file-upload-wrapper { margin-bottom: 15px; }
   .file-button {
     display: flex;
     justify-content: space-between;
     align-items: center;
     background-color: var(--input-background);
     border: 1px dashed var(--border-color);
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius-main);
     padding: 12px 15px;
     cursor: pointer;
     transition: all 0.3s;
     font-size: 0.9em;
     color: #aaa;
   }
-  
   .file-button:hover {
     border-color: var(--kabum-orange);
     color: var(--kabum-orange);
   }
-
   .file-button span {
     white-space: nowrap;
     overflow: hidden;
@@ -291,16 +292,13 @@
     max-width: 90%;
   }
 
-  .button-container {
-    text-align: center;
-    margin-top: 30px;
-  }
-
+  /* Botão Principal */
+  .button-container { text-align: center; margin-top: 30px; }
   button {
     background: var(--kabum-orange);
     color: white;
     border: none;
-    border-radius: var(--border-radius);
+    border-radius: var(--border-radius-main);
     padding: 15px 30px;
     font-family: 'Poppins', sans-serif;
     font-size: 1.1em;
@@ -309,19 +307,18 @@
     transition: all 0.3s;
     letter-spacing: 0.5px;
   }
-
   button:hover:not(:disabled) {
     background: var(--kabum-orange-dark);
     box-shadow: 0 5px 15px rgba(255, 102, 0, 0.2);
     transform: translateY(-2px);
   }
-  
   button:disabled {
     cursor: not-allowed;
     background-color: #555;
     opacity: 0.7;
   }
 
+  /* Loader e Barra de Progresso */
   .loader-overlay {
     position: fixed;
     top: 0;
@@ -335,17 +332,13 @@
     align-items: center;
     z-index: 1000;
   }
-  
-  .loader-content {
-    text-align: center;
-  }
-
+  .loader-content { text-align: center; }
   .loader-text {
     color: var(--text-color);
     margin-top: 20px;
     font-size: 1.1em;
+    transition: all 0.3s;
   }
-
   .spinner {
     border: 5px solid #444;
     border-top: 5px solid var(--kabum-orange);
@@ -354,6 +347,23 @@
     height: 60px;
     animation: spin 1s linear infinite;
     margin: 0 auto;
+  }
+  
+  .progress-bar-container {
+    width: 80%;
+    max-width: 300px;
+    background-color: #444;
+    border-radius: 10px;
+    margin: 20px auto 0 auto;
+    overflow: hidden;
+    border: 1px solid #555;
+  }
+  .progress-bar {
+    width: 0%;
+    height: 12px;
+    background-color: var(--kabum-orange);
+    border-radius: 10px;
+    transition: width 0.5s ease-in-out;
   }
 
   @keyframes spin {
